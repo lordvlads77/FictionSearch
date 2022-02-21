@@ -16,30 +16,46 @@ from bs4 import BeautifulSoup
 start_url = 'https://archiveofourown.org'
 
 
-def crawl(url):
+def crawl(url, depth):
     # TODO: remove the comment below if in the end is unecessary
     # print('crawl("%s")' % url)
 
-    response = requests.get(start_url)
+    try:
+        response = requests.get(start_url)
+    except:
+        print('Failed to perform HTTP GET request on "%s"\n' % url)
+        return
+
     content = BeautifulSoup(response.text, 'lxml')
 
-    links = content.findAll('a')
     title = content.find('title').text
     description = content.find('p').text.strip().replace('\n', ' ')
 
-    # urls = []
-
-    for link in links:
-        try:
-            pass
-        except KeyError:
-            pass
-    return {
+    result = {
         'url': url,
         'title': title,
         'description': description
     }
 
+    print('\n\nReturn:\n', json.dumps(result, indent=2))
 
-result = crawl(start_url)
+    if depth == 0:
+        return result
+
+    try:
+        links = content.findAll('a')
+    except:
+        return result
+
+    for link in links:
+        try:
+            print('following url "%s" on depth: "%d"' % (link['href'], depth))
+            crawl(link['href'], depth - 1)
+        except KeyError:
+            pass
+
+    return result
+
+
+result = crawl(start_url, 1)
 print(json.dumps(result, indent=2))
