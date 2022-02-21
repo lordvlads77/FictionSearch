@@ -13,33 +13,48 @@ import requests
 from bs4 import BeautifulSoup
 
 # TODO: change the stackoverflow page to the AO3 page at the end of code testing
-start_url = 'https://archiveofourown.org'
+start_url = 'https://www.archiveofourown.org'
 
 
-def crawl(url):
+def crawl(url, depth):
+    try:
+        response = requests.get(url)
+    except:
+        print('Failed to perform HTTP GET request on "%s"' % url)
+        return
     # TODO: remove the comment below if in the end is unecessary
     # print('crawl("%s")' % url)
-
-    response = requests.get(start_url)
     content = BeautifulSoup(response.text, 'lxml')
 
-    links = content.findAll('a')
     title = content.find('title').text
     description = content.find('p').text.strip().replace('\n', ' ')
 
-    # urls = []
-
-    for link in links:
-        try:
-            pass
-        except KeyError:
-            pass
-    return {
+    result = {
         'url': url,
         'title': title,
         'description': description
     }
 
+    print('\n\nReturn:\n', json.dumps(result, indent=2))
 
-result = crawl(start_url)
+    if depth == 0:
+        return result
+
+    try:
+        links = content.findAll('a')
+    except:
+        return result
+    # urls = []
+
+    for link in links:
+        try:
+            print('following url "%s" on depth: "%d"' % (link['href'], depth))
+            crawl(link['herf'], depth - 1)
+        except KeyError:
+            pass
+
+    return result
+
+
+result = crawl(start_url, 1)
 print(json.dumps(result, indent=2))
