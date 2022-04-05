@@ -21,6 +21,7 @@ def crawl(url, depth):
     # print('crawl("%s")' % url)
 
     try:
+        print('Crawling url: "%s"' % url)
         response = requests.get(start_url)
     except:
         print('Failed to perform HTTP GET request on "%s"\n' % url)
@@ -29,7 +30,12 @@ def crawl(url, depth):
     content = BeautifulSoup(response.text, 'lxml')
 
     title = content.find('title').text
-    description = content.find('p').text.strip().replace('\n', ' ')
+    description = content.findAll('p')[2]
+
+    if description is None:
+        description = ''
+    else:
+        description = description.text.strip().replace('\n', ' ')
 
     result = {
         'url': url,
@@ -50,7 +56,13 @@ def crawl(url, depth):
     for link in links:
         try:
             print('following url "%s" on depth: "%d"' % (link['href'], depth))
-            crawl(link['href'], depth - 1)
+
+            if 'http' not in link['href']:
+                follow_url = url + link['href']
+            else:
+                follow_url = link['href']
+
+            crawl(follow_url, depth - 1)
         except KeyError:
             pass
 
